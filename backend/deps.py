@@ -7,9 +7,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 # ------------------------------------------------------------------
-#  Load DATABASE_URL from db/.env  (adjust path if your .env lives elsewhere)
+#  Load DATABASE_URL from .env in project root
 # ------------------------------------------------------------------
-env_path = Path(__file__).resolve().parents[1] / "db" / ".env"
+env_path = Path(__file__).resolve().parents[1] / ".env"
 load_dotenv(env_path)
 
 DATABASE_URL = os.getenv("DATABASE_URL")

@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Automatically load db/.env that sits next to this file
-load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
+# Load .env from the parent directory (project root)
+load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 
 from models import (
     Base, User, Model, Product, InspectionRule,

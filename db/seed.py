@@ -61,19 +61,19 @@ with Session(engine) as session:
     
     # ---------- Models ----------
     orientation_clf = Model(
-        name="OrientationClassifier",
+        name="bra-orientation",
         type="cnn",
         version="1.0",
         platform="coreml",
-        file_url="https://cdn.example.com/models/orientation_classifier.mlmodel",
+        file_url="https://cdn.example.com/models/bra-orientation-v1.0.mlpackage",
         description="Classifies garment orientations: Back, Front, No Bra"
     )
     yolov8_model = Model(
-        name="best_with_classes",
+        name="bra-yolo",
         type="yolov8",
-        version="8.0",
+        version="1.0",
         platform="coreml",
-        file_url="https://cdn.example.com/models/yolov8_bra.mlmodel",
+        file_url="https://cdn.example.com/models/bra-yolo-v1.0.mlmodel",
         description="Detects GO, Logo, NGO flaws in bras"
     )
     session.add_all([orientation_clf, yolov8_model])

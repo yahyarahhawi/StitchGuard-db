@@ -262,6 +262,3 @@ For issues and questions:
 3. Examine sample data in `db/seed.py`
 4. Open an issue on GitHub
 
----
-
-**Built with ❤️ for quality assurance in manufacturing** 

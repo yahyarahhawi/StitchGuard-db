@@ -39,6 +39,14 @@ def debug_models_route():
 
 
 # ------------------------------------------------------------------ #
+#  SIMPLE TEST ENDPOINT without parameters
+# ------------------------------------------------------------------ #
+@router.get("/test-models")
+def test_models_route():
+    return {"message": "Test models route works", "timestamp": "test"}
+
+
+# ------------------------------------------------------------------ #
 #  GET MODELS for a specific product (MUST come before /{product_id})
 # ------------------------------------------------------------------ #
 @router.get("/{product_id}/models", response_model=List[schemas.Model])

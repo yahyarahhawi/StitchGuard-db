@@ -262,3 +262,4 @@ For issues and questions:
 3. Examine sample data in `db/seed.py`
 4. Open an issue on GitHub
 
+# Trigger redeploy Thu Jun 26 14:24:12 EDT 2025

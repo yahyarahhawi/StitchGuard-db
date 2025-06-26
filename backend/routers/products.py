@@ -33,7 +33,7 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
 # ------------------------------------------------------------------ #
 #  GET MODELS for a specific product (MUST come before /{product_id})
 # ------------------------------------------------------------------ #
-@router.get("/{product_id}/models", response_model=List[dict])
+@router.get("/{product_id}/models", response_model=List[schemas.Model])
 def get_product_models(product_id: int, db: Session = Depends(get_db)):
     """
     Get all models associated with a specific product
@@ -49,23 +49,8 @@ def get_product_models(product_id: int, db: Session = Depends(get_db)):
     
     models = db.query(Model).filter(Model.id.in_(product.model_ids)).all()
     
-    # Convert to dict format
-    model_list = []
-    for model in models:
-        model_dict = {
-            "id": model.id,
-            "name": model.name,
-            "type": model.type,
-            "version": model.version,
-            "platform": model.platform,
-            "file_url": model.file_url,
-            "description": model.description,
-            "created_at": model.created_at.isoformat(),
-            "updated_at": model.updated_at.isoformat()
-        }
-        model_list.append(model_dict)
     
-    return model_list
+    return models
 
 
 # ------------------------------------------------------------------ #

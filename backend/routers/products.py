@@ -31,13 +31,14 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
 
 
 # ------------------------------------------------------------------ #
-#  GET MODELS for a specific product - USING EXPLICIT ROUTE STRUCTURE
+#  GET MODELS for a specific product - EXPLICIT ROUTE (RECOMMENDED)
 # ------------------------------------------------------------------ #
 @router.get("/by-id/{product_id}/models", response_model=List[schemas.Model])
-def get_product_models(product_id: int, db: Session = Depends(get_db)):
+def get_product_models_explicit(product_id: int, db: Session = Depends(get_db)):
     """
     Get all models associated with a specific product
     Using explicit route structure to avoid conflicts
+    Recommended route: /api/v1/products/by-id/{product_id}/models
     """
     # Get the product
     product = db.query(Product).filter(Product.id == product_id).first()
@@ -49,12 +50,34 @@ def get_product_models(product_id: int, db: Session = Depends(get_db)):
         return []
     
     models = db.query(Model).filter(Model.id.in_(product.model_ids)).all()
-    
     return models
 
 
 # ------------------------------------------------------------------ #
-#  GET one product
+#  GET MODELS for a specific product - ORIGINAL ROUTE (FIXED ORDER)
+# ------------------------------------------------------------------ #
+@router.get("/{product_id}/models", response_model=List[schemas.Model])
+def get_product_models_original(product_id: int, db: Session = Depends(get_db)):
+    """
+    Get all models associated with a specific product
+    Original route structure: /api/v1/products/{product_id}/models
+    MUST be placed before the general /{product_id} route
+    """
+    # Get the product
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Get models by IDs
+    if not product.model_ids:
+        return []
+    
+    models = db.query(Model).filter(Model.id.in_(product.model_ids)).all()
+    return models
+
+
+# ------------------------------------------------------------------ #
+#  GET one product (MUST be placed AFTER specific routes)
 # ------------------------------------------------------------------ #
 @router.get("/{product_id}", response_model=schemas.Product)
 def get_product(product_id: int, db: Session = Depends(get_db)):

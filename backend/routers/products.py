@@ -11,40 +11,15 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 
 # ------------------------------------------------------------------ #
-#  LIST all products (specific route - no parameters)
+#  LIST all products
 # ------------------------------------------------------------------ #
-@router.get("/")  # Temporarily removing response_model to return test message
+@router.get("/", response_model=List[schemas.Product])
 def list_products(db: Session = Depends(get_db)):
-    # DEPLOYMENT TEST: Return test message to verify deployment
-    return {"message": "DEPLOYMENT TEST - This confirms the new code is deployed", "timestamp": "2025-06-26"}
+    return db.query(Product).all()
 
 
 # ------------------------------------------------------------------ #
-#  DEBUG ENDPOINT to test models route (specific route - no parameters)
-# ------------------------------------------------------------------ #
-@router.get("/debug/models")
-def debug_models_route():
-    return {"message": "Models route is reachable", "timestamp": "debug"}
-
-
-# ------------------------------------------------------------------ #
-#  SIMPLE TEST ENDPOINT without parameters (specific route - no parameters)
-# ------------------------------------------------------------------ #
-@router.get("/test-models")
-def test_models_route():
-    return {"message": "Test models route works", "timestamp": "test"}
-
-
-# ------------------------------------------------------------------ #
-#  TEST DEPLOY (specific route - no parameters)
-# ------------------------------------------------------------------ #
-@router.get("/test-deploy")
-def test_deploy():
-    return {"message": "Deployment working", "timestamp": "$(date)"}
-
-
-# ------------------------------------------------------------------ #
-#  CREATE a new product (specific route - no parameters in path)
+#  CREATE a new product
 # ------------------------------------------------------------------ #
 @router.post("/", response_model=schemas.Product, status_code=status.HTTP_201_CREATED)
 def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)):
@@ -55,17 +30,14 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
     return prod
 
 
-# ================================================================== #
-#  ROUTES WITH PATH PARAMETERS - MUST COME AFTER SPECIFIC ROUTES
-# ================================================================== #
-
 # ------------------------------------------------------------------ #
-#  GET MODELS for a specific product (parameterized route)
+#  GET MODELS for a specific product - USING EXPLICIT ROUTE STRUCTURE
 # ------------------------------------------------------------------ #
-@router.get("/{product_id}/models", response_model=List[schemas.Model])
+@router.get("/by-id/{product_id}/models", response_model=List[schemas.Model])
 def get_product_models(product_id: int, db: Session = Depends(get_db)):
     """
     Get all models associated with a specific product
+    Using explicit route structure to avoid conflicts
     """
     # Get the product
     product = db.query(Product).filter(Product.id == product_id).first()
@@ -82,7 +54,7 @@ def get_product_models(product_id: int, db: Session = Depends(get_db)):
 
 
 # ------------------------------------------------------------------ #
-#  GET one product (parameterized route - MUST be LAST)
+#  GET one product
 # ------------------------------------------------------------------ #
 @router.get("/{product_id}", response_model=schemas.Product)
 def get_product(product_id: int, db: Session = Depends(get_db)):

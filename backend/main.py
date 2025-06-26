@@ -40,9 +40,10 @@ for router in routers:
 def root():
     return {
         "status": "OK",
-        "message": "StitchGuard API is running",
+        "message": "StitchGuard API is running - DEPLOYMENT TEST 2025-06-26",
         "version": "1.0.0",
-        "docs": "/docs"
+        "docs": "/docs",
+        "latest_commit": "b5dc4b3"
     }
 
 

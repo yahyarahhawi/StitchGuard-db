@@ -13,9 +13,10 @@ router = APIRouter(prefix="/products", tags=["products"])
 # ------------------------------------------------------------------ #
 #  LIST all products (specific route - no parameters)
 # ------------------------------------------------------------------ #
-@router.get("/", response_model=List[schemas.Product])
+@router.get("/")  # Temporarily removing response_model to return test message
 def list_products(db: Session = Depends(get_db)):
-    return db.query(Product).all()
+    # DEPLOYMENT TEST: Return test message to verify deployment
+    return {"message": "DEPLOYMENT TEST - This confirms the new code is deployed", "timestamp": "2025-06-26"}
 
 
 # ------------------------------------------------------------------ #

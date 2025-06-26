@@ -31,6 +31,14 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
 
 
 # ------------------------------------------------------------------ #
+#  DEBUG ENDPOINT to test models route
+# ------------------------------------------------------------------ #
+@router.get("/debug/models")
+def debug_models_route():
+    return {"message": "Models route is reachable", "timestamp": "debug"}
+
+
+# ------------------------------------------------------------------ #
 #  GET MODELS for a specific product (MUST come before /{product_id})
 # ------------------------------------------------------------------ #
 @router.get("/{product_id}/models", response_model=List[schemas.Model])

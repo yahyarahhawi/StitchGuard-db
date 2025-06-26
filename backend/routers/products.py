@@ -31,16 +31,8 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
 
 
 # ------------------------------------------------------------------ #
-#  GET one product
+#  GET MODELS for a specific product (MUST come before /{product_id})
 # ------------------------------------------------------------------ #
-@router.get("/{product_id}", response_model=schemas.Product)
-def get_product(product_id: int, db: Session = Depends(get_db)):
-    prod = db.query(Product).get(product_id)
-    if not prod:
-        raise HTTPException(status_code=404, detail="Product not found")
-    return prod
-
-
 @router.get("/{product_id}/models", response_model=List[dict])
 async def get_product_models(product_id: int, db: Session = Depends(get_db)):
     """
@@ -74,3 +66,14 @@ async def get_product_models(product_id: int, db: Session = Depends(get_db)):
         model_list.append(model_dict)
     
     return model_list
+
+
+# ------------------------------------------------------------------ #
+#  GET one product (MUST come after specific routes)
+# ------------------------------------------------------------------ #
+@router.get("/{product_id}", response_model=schemas.Product)
+def get_product(product_id: int, db: Session = Depends(get_db)):
+    prod = db.query(Product).get(product_id)
+    if not prod:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return prod

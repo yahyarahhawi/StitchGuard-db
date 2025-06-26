@@ -34,7 +34,7 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
 #  GET MODELS for a specific product (MUST come before /{product_id})
 # ------------------------------------------------------------------ #
 @router.get("/{product_id}/models", response_model=List[dict])
-async def get_product_models(product_id: int, db: Session = Depends(get_db)):
+def get_product_models(product_id: int, db: Session = Depends(get_db)):
     """
     Get all models associated with a specific product
     """

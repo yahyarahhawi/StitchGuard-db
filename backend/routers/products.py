@@ -11,7 +11,7 @@ router = APIRouter(prefix="/products", tags=["products"])
 
 
 # ------------------------------------------------------------------ #
-#  LIST all products
+#  LIST all products (specific route - no parameters)
 # ------------------------------------------------------------------ #
 @router.get("/", response_model=List[schemas.Product])
 def list_products(db: Session = Depends(get_db)):
@@ -19,7 +19,31 @@ def list_products(db: Session = Depends(get_db)):
 
 
 # ------------------------------------------------------------------ #
-#  CREATE a new product
+#  DEBUG ENDPOINT to test models route (specific route - no parameters)
+# ------------------------------------------------------------------ #
+@router.get("/debug/models")
+def debug_models_route():
+    return {"message": "Models route is reachable", "timestamp": "debug"}
+
+
+# ------------------------------------------------------------------ #
+#  SIMPLE TEST ENDPOINT without parameters (specific route - no parameters)
+# ------------------------------------------------------------------ #
+@router.get("/test-models")
+def test_models_route():
+    return {"message": "Test models route works", "timestamp": "test"}
+
+
+# ------------------------------------------------------------------ #
+#  TEST DEPLOY (specific route - no parameters)
+# ------------------------------------------------------------------ #
+@router.get("/test-deploy")
+def test_deploy():
+    return {"message": "Deployment working", "timestamp": "$(date)"}
+
+
+# ------------------------------------------------------------------ #
+#  CREATE a new product (specific route - no parameters in path)
 # ------------------------------------------------------------------ #
 @router.post("/", response_model=schemas.Product, status_code=status.HTTP_201_CREATED)
 def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)):
@@ -30,24 +54,12 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
     return prod
 
 
-# ------------------------------------------------------------------ #
-#  DEBUG ENDPOINT to test models route
-# ------------------------------------------------------------------ #
-@router.get("/debug/models")
-def debug_models_route():
-    return {"message": "Models route is reachable", "timestamp": "debug"}
-
+# ================================================================== #
+#  ROUTES WITH PATH PARAMETERS - MUST COME AFTER SPECIFIC ROUTES
+# ================================================================== #
 
 # ------------------------------------------------------------------ #
-#  SIMPLE TEST ENDPOINT without parameters
-# ------------------------------------------------------------------ #
-@router.get("/test-models")
-def test_models_route():
-    return {"message": "Test models route works", "timestamp": "test"}
-
-
-# ------------------------------------------------------------------ #
-#  GET MODELS for a specific product (MUST come before /{product_id})
+#  GET MODELS for a specific product (parameterized route)
 # ------------------------------------------------------------------ #
 @router.get("/{product_id}/models", response_model=List[schemas.Model])
 def get_product_models(product_id: int, db: Session = Depends(get_db)):
@@ -65,12 +77,11 @@ def get_product_models(product_id: int, db: Session = Depends(get_db)):
     
     models = db.query(Model).filter(Model.id.in_(product.model_ids)).all()
     
-    
     return models
 
 
 # ------------------------------------------------------------------ #
-#  GET one product (MUST come after specific routes)
+#  GET one product (parameterized route - MUST be LAST)
 # ------------------------------------------------------------------ #
 @router.get("/{product_id}", response_model=schemas.Product)
 def get_product(product_id: int, db: Session = Depends(get_db)):
@@ -78,8 +89,4 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     if not prod:
         raise HTTPException(status_code=404, detail="Product not found")
     return prod
-
-@router.get("/test-deploy")
-def test_deploy():
-    return {"message": "Deployment working", "timestamp": "$(date)"}
 

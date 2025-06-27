@@ -19,18 +19,10 @@ def list_users(db: Session = Depends(get_db)):
 
 @router.post("/", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
 def create_user(payload: schemas.UserCreate, db: Session = Depends(get_db)):
-    user = User(**payload.dict())
+    user = User(**payload.model_dump())
     db.add(user)
     db.commit()
     db.refresh(user)
-    return user
-
-
-@router.get("/{user_id}", response_model=schemas.User)
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).get(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
     return user
 
 
@@ -38,6 +30,14 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
 def get_user_by_auth_id(auth_id: str, db: Session = Depends(get_db)):
     """Get user by Supabase auth ID"""
     user = db.query(User).filter(User.auth_id == auth_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.get("/{user_id}", response_model=schemas.User)
+def get_user(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user

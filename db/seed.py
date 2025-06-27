@@ -65,7 +65,7 @@ with Session(engine) as session:
         type="cnn",
         version="1.0",
         platform="coreml",
-        file_url="https://stitchguard-db-production.up.railway.app/api/v1/models/files/bra-orientation.mlmodelc",
+        file_url="https://tbedowzfvzzifoxdisqv.supabase.co/storage/v1/object/sign/models/bra-orientation.mlpackage.zip?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iYTVkODAxMC00ODMyLTRkMzUtODBmMi05MTI0YzAyZmQwMmUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtb2RlbHMvYnJhLW9yaWVudGF0aW9uLm1scGFja2FnZS56aXAiLCJpYXQiOjE3NTEwNTgyNDQsImV4cCI6MTc4MjU5NDI0NH0.xnJ80fD-eehyJte1lI8Bx73vyrr3IefaX8PclHWXAJY",
         description="Classifies bra orientations: Back, Front, No Bra"
     )
     yolov8_model = Model(
@@ -73,7 +73,7 @@ with Session(engine) as session:
         type="yolov8",
         version="1.0",
         platform="coreml",
-        file_url="https://stitchguard-db-production.up.railway.app/api/v1/models/files/bra-yolo.mlmodelc",
+        file_url="https://tbedowzfvzzifoxdisqv.supabase.co/storage/v1/object/sign/models/bra-yolo.mlmodel?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iYTVkODAxMC00ODMyLTRkMzUtODBmMi05MTI0YzAyZmQwMmUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtb2RlbHMvYnJhLXlvbG8ubWxtb2RlbCIsImlhdCI6MTc1MTA1ODI3MCwiZXhwIjoxNzgyNTk0MjcwfQ.emVxwVZBuZPmCUIj8jzoGPoKvpBb3ideKLLV3K026sc",
         description="Detects GO, Logo, NGO flaws in bras"
     )
     session.add_all([orientation_clf, yolov8_model])

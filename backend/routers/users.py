@@ -8,6 +8,7 @@ from backend import schemas
 from backend.deps import get_db
 from db.models import User
 
+# Updated for Supabase authentication support
 router = APIRouter(prefix="/users", tags=["users"])
 
 

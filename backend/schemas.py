@@ -22,9 +22,17 @@ class UserCreate(UserBase):
     role: str  # 'sewer' | 'supervisor'
 
 
+class UserAuthSync(BaseModel):
+    auth_id: str
+    email: str
+    name: str
+    role: str = "sewer"  # Default role
+
+
 class User(UserBase):
     id: int
     role: str
+    auth_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

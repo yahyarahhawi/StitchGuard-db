@@ -17,6 +17,7 @@ class User(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     role = Column(String(50), nullable=False)  # 'sewer' | 'supervisor'
+    auth_id = Column(String(255), unique=True, nullable=True)  # Supabase auth ID
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 

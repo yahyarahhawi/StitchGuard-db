@@ -264,3 +264,58 @@ For issues and questions:
 
 # Trigger redeploy Thu Jun 26 14:24:12 EDT 2025
 # Force Railway Redeploy - Thu Jun 26 15:12:51 EDT 2025
+
+# StitchGuard Database
+
+This is the backend database and API for the StitchGuard quality inspection system.
+
+## Recent Changes
+
+### Removed Order Seeding
+- **Removed all order creation from `seed.py`** - Orders are no longer automatically created during database seeding
+- **Deleted `create_test_assignments.sql`** - Manual order assignment script removed
+- **Focus on Bra Inspection Only** - Only bra inspection products and models are seeded
+
+### What Gets Seeded Now
+- ✅ Users (Sam Wood, Yahya Rahhawi, Jane Smith)
+- ✅ ML Models for bra inspection only (orientation classifier + YOLO detection)
+- ✅ Bra product configuration
+- ✅ Inspection rules for bra products
+- ❌ No orders (create manually via API)
+- ❌ No T-shirt or other products
+
+### Model Installation Fix
+- Updated model URLs to use `bundle://` prefix for bundled models
+- This should resolve model installation issues by using locally bundled models instead of non-existent CDN URLs
+
+## Usage
+
+### 1. Database Setup
+```bash
+cd StitchGuard-db
+python -m pip install -r requirements.txt
+python db/seed.py
+```
+
+### 2. Start API Server
+```bash
+cd StitchGuard-db
+python start_api.py
+```
+
+### 3. Create Orders Manually
+Orders should now be created manually through:
+- API endpoints (POST `/api/v1/orders`)
+- Admin interface (if implemented)
+- Direct database insertion
+
+## API Endpoints
+- `GET /api/v1/products` - List available products (bra only)
+- `GET /api/v1/products/{id}/models` - Get models for a product
+- `POST /api/v1/orders` - Create new orders
+- `GET /api/v1/orders/assigned-to/{user_id}` - Get assigned orders
+
+## Notes
+- The system now focuses exclusively on bra inspection workflows
+- Models are bundled locally to avoid download/installation issues
+- Orders must be created manually or through separate management tools

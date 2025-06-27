@@ -1,7 +1,9 @@
 from typing import List
 from datetime import datetime
+import os
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 import backend.schemas as schemas
@@ -10,6 +12,8 @@ from db.models import Model
 
 router = APIRouter(prefix="/models", tags=["models"])
 
+# Model files directory
+MODEL_FILES_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "model_files")
 
 @router.get("/", response_model=List[schemas.Model])
 def list_models(
@@ -27,6 +31,33 @@ def list_models(
         query = query.filter(Model.platform == platform)
     
     return query.offset(offset).limit(limit).all()
+
+
+@router.get("/files/{filename}")
+def download_model_file(filename: str):
+    """
+    Serve model files for download
+    Endpoint: /api/v1/models/files/{filename}
+    """
+    file_path = os.path.join(MODEL_FILES_DIR, filename)
+    
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail=f"Model file '{filename}' not found")
+    
+    # Determine media type based on file extension
+    media_type = "application/octet-stream"  # Default for .mlmodelc files
+    
+    if filename.endswith('.mlmodel'):
+        media_type = "application/x-mlmodel"
+    elif filename.endswith('.mlpackage'):
+        media_type = "application/x-mlpackage"
+    
+    return FileResponse(
+        path=file_path,
+        media_type=media_type,
+        filename=filename,
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 
 @router.post("/", response_model=schemas.Model, status_code=status.HTTP_201_CREATED)

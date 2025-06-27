@@ -7,7 +7,7 @@ from sqlalchemy import func
 
 import backend.schemas as schemas
 from backend.deps import get_db
-from db.models import Order, User, Product, InspectedItem
+from db.models import Order, User, Product, InspectedItem, AssignedSewer
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -47,6 +47,38 @@ def create_order(payload: schemas.OrderCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(order)
     return order
+
+
+@router.get("/assigned-to/{user_id}", response_model=List[schemas.Order])
+def get_orders_assigned_to_user(user_id: int, db: Session = Depends(get_db)):
+    """Get all orders assigned to a specific user (sewer)"""
+    # Verify user exists
+    user = db.query(User).get(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get orders assigned to this user through the AssignedSewer table
+    orders = db.query(Order).join(AssignedSewer).filter(
+        AssignedSewer.sewer_id == user_id
+    ).all()
+    
+    return orders
+
+
+@router.get("/assigned-to-auth/{auth_id}", response_model=List[schemas.Order])
+def get_orders_assigned_to_auth_user(auth_id: str, db: Session = Depends(get_db)):
+    """Get all orders assigned to a user by their Supabase auth ID"""
+    # Find user by auth_id
+    user = db.query(User).filter(User.auth_id == auth_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get orders assigned to this user through the AssignedSewer table
+    orders = db.query(Order).join(AssignedSewer).filter(
+        AssignedSewer.sewer_id == user.id
+    ).all()
+    
+    return orders
 
 
 @router.get("/{order_id}", response_model=schemas.Order)

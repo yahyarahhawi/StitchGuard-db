@@ -24,6 +24,15 @@ if not DATABASE_URL:
     DATABASE_URL = "sqlite:///./stitchguard.db"
     print(f"⚠️  No DATABASE_URL found, using SQLite: {DATABASE_URL}")
 
+# ✅ SECURITY FIX: Load model URLs from environment variables
+BRA_ORIENTATION_MODEL_URL = os.getenv("BRA_ORIENTATION_MODEL_URL")
+BRA_YOLO_MODEL_URL = os.getenv("BRA_YOLO_MODEL_URL")
+
+if not BRA_ORIENTATION_MODEL_URL:
+    raise RuntimeError("BRA_ORIENTATION_MODEL_URL not set in .env")
+if not BRA_YOLO_MODEL_URL:
+    raise RuntimeError("BRA_YOLO_MODEL_URL not set in .env")
+
 engine = create_engine(DATABASE_URL, echo=False)
 
 # DEV ONLY: wipe all existing tables so create_all() recreates them fresh
@@ -60,12 +69,13 @@ with Session(engine) as session:
     print("🤖 Creating ML models for bra inspection...")
     
     # ---------- Models (Only for Bra Inspection) ----------
+    # ✅ SECURITY FIX: Use environment variables instead of hardcoded URLs
     orientation_clf = Model(
         name="bra-orientation",
         type="cnn",
         version="1.0",
         platform="coreml",
-        file_url="https://tbedowzfvzzifoxdisqv.supabase.co/storage/v1/object/sign/models/bra-orientation.mlpackage.zip?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iYTVkODAxMC00ODMyLTRkMzUtODBmMi05MTI0YzAyZmQwMmUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtb2RlbHMvYnJhLW9yaWVudGF0aW9uLm1scGFja2FnZS56aXAiLCJpYXQiOjE3NTEwNTgyNDQsImV4cCI6MTc4MjU5NDI0NH0.xnJ80fD-eehyJte1lI8Bx73vyrr3IefaX8PclHWXAJY",
+        file_url=BRA_ORIENTATION_MODEL_URL,
         description="Classifies bra orientations: Back, Front, No Bra"
     )
     yolov8_model = Model(
@@ -73,7 +83,7 @@ with Session(engine) as session:
         type="yolov8",
         version="1.0",
         platform="coreml",
-        file_url="https://tbedowzfvzzifoxdisqv.supabase.co/storage/v1/object/sign/models/bra-yolo.mlmodel?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iYTVkODAxMC00ODMyLTRkMzUtODBmMi05MTI0YzAyZmQwMmUiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJtb2RlbHMvYnJhLXlvbG8ubWxtb2RlbCIsImlhdCI6MTc1MTA1ODI3MCwiZXhwIjoxNzgyNTk0MjcwfQ.emVxwVZBuZPmCUIj8jzoGPoKvpBb3ideKLLV3K026sc",
+        file_url=BRA_YOLO_MODEL_URL,
         description="Detects GO, Logo, NGO flaws in bras"
     )
     session.add_all([orientation_clf, yolov8_model])

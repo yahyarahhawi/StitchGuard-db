@@ -170,12 +170,14 @@ class ShippingDetail(Base):
 
     id = Column(Integer, primary_key=True)
     order_id = Column(Integer, ForeignKey('orders.id'), nullable=False)
-    address = Column(Text)
-    shipping_method = Column(String(100))
-    tracking_number = Column(String(255))
+    address = Column(Text, nullable=False)  # Updated to be required
+    shipping_method = Column(String(100), nullable=False)  # Updated to be required (carrier)
+    tracking_number = Column(String(255), nullable=False)  # Updated to be required
     completion_date = Column(Date)
     shipping_cost = Column(Float)
     receipt_photo_url = Column(Text)
+    notes = Column(Text)  # New field for shipping notes
+    shipped_at = Column(DateTime)  # New field for actual ship timestamp
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 

@@ -196,10 +196,22 @@ class ShippingDetailBase(BaseModel):
     completion_date: Optional[date] = None
     shipping_cost: Optional[float] = None
     receipt_photo_url: Optional[str] = None
+    notes: Optional[str] = None
+    shipped_at: Optional[datetime] = None
 
 
-class ShippingDetailCreate(ShippingDetailBase):
+class ShippingDetailCreate(BaseModel):
+    """Schema for creating shipping details when an order is shipped"""
     order_id: int
+    address: str  # Required for shipping
+    shipping_method: str  # Required - acts as carrier (UPS, FedEx, etc.)
+    tracking_number: str  # Required
+    notes: Optional[str] = None
+    shipped_at: datetime  # When the order was actually shipped
+
+
+class ShippingDetailUpdate(ShippingDetailBase):
+    pass
 
 
 class ShippingDetail(ShippingDetailBase):

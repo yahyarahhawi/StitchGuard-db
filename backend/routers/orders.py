@@ -7,7 +7,7 @@ from sqlalchemy import func
 
 import backend.schemas as schemas
 from backend.deps import get_db
-from db.models import Order, User, Product, InspectedItem, AssignedSewer
+from db.models import Order, User, Product, InspectedItem, AssignedSewer, ShippingDetail
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -158,3 +158,69 @@ def get_order_stats(order_id: int, db: Session = Depends(get_db)):
         failed_items=failed_items,
         pass_rate=pass_rate
     )
+
+
+@router.put("/{order_id}/progress", response_model=schemas.Order)
+def update_order_progress(
+    order_id: int,
+    progress_update: dict,  # Expecting {"completed": int}
+    db: Session = Depends(get_db)
+):
+    """Update the completed count for an order"""
+    order = db.query(Order).get(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    new_completed = progress_update.get("completed")
+    if new_completed is None:
+        raise HTTPException(status_code=400, detail="Missing 'completed' field")
+    
+    if new_completed < 0 or new_completed > order.quantity:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Completed count must be between 0 and {order.quantity}"
+        )
+    
+    order.completed = new_completed
+    order.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(order)
+    return order
+
+
+@router.post("/shipping", response_model=schemas.ShippingDetail, status_code=status.HTTP_201_CREATED)
+def create_shipping_record(payload: schemas.ShippingDetailCreate, db: Session = Depends(get_db)):
+    """Create a shipping record for a completed order"""
+    # Validate order exists and can be shipped
+    order = db.query(Order).get(payload.order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    if order.completed < order.quantity:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Order not ready for shipping. Completed: {order.completed}/{order.quantity}"
+        )
+    
+    # Check if order is already shipped
+    existing_shipping = db.query(ShippingDetail).filter(
+        ShippingDetail.order_id == payload.order_id
+    ).first()
+    
+    if existing_shipping:
+        raise HTTPException(
+            status_code=400, 
+            detail="Order has already been shipped"
+        )
+    
+    shipping_record = ShippingDetail(
+        **payload.dict(),
+        created_at=datetime.utcnow()
+    )
+    
+    db.add(shipping_record)
+    db.commit()
+    db.refresh(shipping_record)
+    
+    return shipping_record

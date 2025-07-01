@@ -63,18 +63,53 @@ def get_orders_assigned_to_user(user_id: int, db: Session = Depends(get_db)):
     return orders
 
 
-@router.get("/assigned-to-auth/{auth_id}", response_model=List[schemas.Order])
+@router.get("/assigned-to-auth/{auth_id}", response_model=List[schemas.OrderWithNames])
 def get_orders_assigned_to_auth_user(auth_id: str, db: Session = Depends(get_db)):
-    """Get all orders assigned to a user by their Supabase auth ID"""
+    """Get all orders assigned to a user by their Supabase auth ID with names for UI"""
     # Find user by auth_id
     user = db.query(User).filter(User.auth_id == auth_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Get orders assigned directly to this sewer
-    orders = db.query(Order).filter(Order.sewer_id == user.id).all()
+    # Get orders assigned directly to this sewer with supervisor and sewer names
+    orders_with_names = db.query(
+        Order.id,
+        Order.name,
+        Order.supervisor_id,
+        Order.sewer_id,
+        Order.product_id,
+        Order.quantity,
+        Order.completed,
+        Order.deadline,
+        Order.created_at,
+        Order.updated_at,
+        User.name.label('supervisor_name')
+    ).join(
+        User, Order.supervisor_id == User.id
+    ).filter(Order.sewer_id == user.id).all()
     
-    return orders
+    # Convert to response format
+    result = []
+    for order in orders_with_names:
+        # Get sewer name (we know it's the current user)
+        sewer_name = user.name
+        
+        result.append({
+            "id": order.id,
+            "name": order.name,
+            "supervisor_id": order.supervisor_id,
+            "sewer_id": order.sewer_id,
+            "product_id": order.product_id,
+            "quantity": order.quantity,
+            "completed": order.completed,
+            "deadline": order.deadline,
+            "created_at": order.created_at,
+            "updated_at": order.updated_at,
+            "supervisor_name": order.supervisor_name,
+            "sewer_name": sewer_name
+        })
+    
+    return result
 
 
 @router.get("/{order_id}", response_model=schemas.Order)

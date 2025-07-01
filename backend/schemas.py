@@ -93,6 +93,22 @@ class Order(OrderBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class OrderWithNames(OrderBase):
+    """Enhanced Order response with supervisor and sewer names for UI display"""
+    id: int
+    supervisor_id: int
+    sewer_id: int
+    completed: int = 0
+    created_at: datetime
+    updated_at: datetime
+    
+    # Additional fields for UI
+    supervisor_name: str
+    sewer_name: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # ------------------------------------------------------------------ #
 #  INSPECTION CONFIG & RULES
 # ------------------------------------------------------------------ #

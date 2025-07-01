@@ -145,10 +145,10 @@ with Session(engine) as session:
     bra_order = Order(
         name="Bra Quality Inspection Batch #001",
         supervisor_id=supervisor.id,
+        sewer_id=yahya.id,
         product_id=bra_product.id,
         quantity=50,
         completed=0,
-        assigned_by="Sam Wood",
         deadline=date.today() + timedelta(days=30)
     )
     

@@ -78,7 +78,7 @@ def create_inspected_item(
         serial_number=payload.serial_number,
         order_id=payload.order_id,
         sewer_id=payload.sewer_id,
-        passed=payload.passed,
+        status=payload.status,  # Now using status instead of passed
         front_image_url=payload.front_image_url,
         back_image_url=payload.back_image_url,
         inspected_at=payload.inspected_at or datetime.utcnow(),
@@ -127,7 +127,7 @@ def get_inspected_item(item_id: int, db: Session = Depends(get_db)):
 def list_inspected_items(
     order_id: int = None,
     sewer_id: int = None,
-    passed: bool = None,
+    status: str = None,  # Now filter by status instead of passed
     limit: int = 100,
     offset: int = 0,
     db: Session = Depends(get_db)
@@ -138,8 +138,8 @@ def list_inspected_items(
         query = query.filter(InspectedItem.order_id == order_id)
     if sewer_id:
         query = query.filter(InspectedItem.sewer_id == sewer_id)
-    if passed is not None:
-        query = query.filter(InspectedItem.passed == passed)
+    if status:
+        query = query.filter(InspectedItem.status == status)
     
     items = query.offset(offset).limit(limit).all()
     return items

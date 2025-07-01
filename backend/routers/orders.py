@@ -172,12 +172,16 @@ def get_order_stats(order_id: int, db: Session = Depends(get_db)):
         InspectedItem.order_id == order_id
     ).count()
     
+    # Count PASSED and OVERRIDDEN as successful completions
     passed_items = db.query(InspectedItem).filter(
         InspectedItem.order_id == order_id,
-        InspectedItem.passed == True
+        InspectedItem.status.in_(['PASSED', 'OVERRIDDEN'])
     ).count()
     
-    failed_items = total_items - passed_items
+    failed_items = db.query(InspectedItem).filter(
+        InspectedItem.order_id == order_id,
+        InspectedItem.status == 'FAILED'
+    ).count()
     pass_rate = (passed_items / total_items * 100) if total_items > 0 else 0
     
     return schemas.OrderStats(
@@ -217,6 +221,32 @@ def update_order_progress(
     
     db.commit()
     db.refresh(order)
+    return order
+
+
+@router.put("/{order_id}/recalculate-progress", response_model=schemas.Order)  
+def recalculate_order_progress(order_id: int, db: Session = Depends(get_db)):
+    """Automatically recalculate the completed count based on actual inspected items"""
+    order = db.query(Order).get(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Count items with PASSED or OVERRIDDEN status as completed
+    actual_completed = db.query(InspectedItem).filter(
+        InspectedItem.order_id == order_id,
+        InspectedItem.status.in_(['PASSED', 'OVERRIDDEN'])
+    ).count()
+    
+    # Update the order with the actual completed count
+    old_completed = order.completed
+    order.completed = actual_completed
+    order.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(order)
+    
+    print(f"📊 Order {order_id} completed count updated: {old_completed} → {actual_completed}")
+    
     return order
 
 

@@ -158,7 +158,7 @@ class InspectedItemCreate(BaseModel):
     serial_number: str
     order_id: int
     sewer_id: int
-    passed: bool
+    status: str  # 'PASSED', 'FAILED', 'OVERRIDDEN'
     front_image_url: Optional[str] = None
     back_image_url: Optional[str] = None
     inspected_at: Optional[datetime] = None
@@ -170,7 +170,7 @@ class InspectedItemOut(BaseModel):
     serial_number: str
     order_id: int
     sewer_id: int
-    passed: bool
+    status: str  # 'PASSED', 'FAILED', 'OVERRIDDEN'
     front_image_url: Optional[str] = None
     back_image_url: Optional[str] = None
     inspected_at: datetime

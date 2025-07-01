@@ -143,7 +143,7 @@ class InspectedItem(Base):
     serial_number = Column(String(255), unique=True, nullable=False)
     order_id = Column(Integer, ForeignKey('orders.id'), nullable=False)
     sewer_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    passed = Column(Boolean, nullable=False)
+    status = Column(String(20), nullable=False, default='PASSED')  # PASSED, FAILED, OVERRIDDEN
     front_image_url = Column(Text)
     back_image_url = Column(Text)
     inspected_at = Column(DateTime, default=func.now())

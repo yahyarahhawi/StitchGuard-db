@@ -57,10 +57,8 @@ def get_orders_assigned_to_user(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Get orders assigned to this user through the AssignedSewer table
-    orders = db.query(Order).join(AssignedSewer).filter(
-        AssignedSewer.sewer_id == user_id
-    ).all()
+    # Get orders assigned directly to this sewer
+    orders = db.query(Order).filter(Order.sewer_id == user_id).all()
     
     return orders
 
@@ -73,10 +71,8 @@ def get_orders_assigned_to_auth_user(auth_id: str, db: Session = Depends(get_db)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Get orders assigned to this user through the AssignedSewer table
-    orders = db.query(Order).join(AssignedSewer).filter(
-        AssignedSewer.sewer_id == user.id
-    ).all()
+    # Get orders assigned directly to this sewer
+    orders = db.query(Order).filter(Order.sewer_id == user.id).all()
     
     return orders
 
@@ -224,3 +220,25 @@ def create_shipping_record(payload: schemas.ShippingDetailCreate, db: Session = 
     db.refresh(shipping_record)
     
     return shipping_record
+
+
+@router.get("/{order_id}/shipping-status")
+def get_order_shipping_status(order_id: int, db: Session = Depends(get_db)):
+    """Check if an order has been shipped"""
+    order = db.query(Order).get(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Check if there's a shipping detail with shipped_at timestamp
+    shipping_detail = db.query(ShippingDetail).filter(
+        ShippingDetail.order_id == order_id,
+        ShippingDetail.shipped_at.isnot(None)
+    ).first()
+    
+    return {
+        "order_id": order_id,
+        "is_shipped": shipping_detail is not None,
+        "shipped_at": shipping_detail.shipped_at if shipping_detail else None,
+        "tracking_number": shipping_detail.tracking_number if shipping_detail else None,
+        "carrier": shipping_detail.shipping_method if shipping_detail else None
+    }

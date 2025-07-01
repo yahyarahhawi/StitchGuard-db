@@ -69,21 +69,23 @@ class OrderBase(BaseModel):
     product_id: int
     quantity: int
     deadline: date
-    assigned_by: Optional[str] = None
 
 
 class OrderCreate(OrderBase):
     supervisor_id: int
+    sewer_id: int  # NEW: Direct sewer assignment
 
 
 class OrderUpdate(BaseModel):
     completed: Optional[int] = None
     deadline: Optional[date] = None
+    sewer_id: Optional[int] = None  # NEW: Allow updating sewer assignment
 
 
 class Order(OrderBase):
     id: int
     supervisor_id: int
+    sewer_id: int  # NEW: Direct sewer assignment
     completed: int = 0
     created_at: datetime
     updated_at: datetime

@@ -23,6 +23,8 @@ class User(Base):
 
     supervised_orders = relationship("Order", back_populates="supervisor",
                                      foreign_keys='Order.supervisor_id')
+    assigned_orders = relationship("Order", back_populates="sewer",
+                                   foreign_keys='Order.sewer_id')
     inspections = relationship("InspectedItem", back_populates="sewer",
                                foreign_keys='InspectedItem.sewer_id')
 
@@ -99,18 +101,20 @@ class Order(Base):
     __tablename__ = 'orders'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(255), nullable=False)  # Added missing name field
+    name = Column(String(255), nullable=False)
     supervisor_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    sewer_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
     quantity = Column(Integer, nullable=False)
-    completed = Column(Integer, default=0)  # Added completed count
-    assigned_by = Column(String(255))  # Added for iOS app compatibility
+    completed = Column(Integer, default=0)
     deadline = Column(Date, nullable=False)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     supervisor = relationship("User", back_populates="supervised_orders",
                               foreign_keys=[supervisor_id])
+    sewer = relationship("User", back_populates="assigned_orders",
+                         foreign_keys=[sewer_id])
     product = relationship("Product", back_populates="orders")
     assigned_sewers = relationship("AssignedSewer", back_populates="order")
     inspected_items = relationship("InspectedItem", back_populates="order")

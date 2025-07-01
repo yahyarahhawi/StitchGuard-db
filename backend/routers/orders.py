@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -231,10 +231,24 @@ def recalculate_order_progress(order_id: int, db: Session = Depends(get_db)):
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     
-    # Count items with PASSED or OVERRIDDEN status as completed
+    # Only count items from the last 24 hours to avoid old test data
+    yesterday = datetime.utcnow() - timedelta(hours=24)
+    
+    # Count items with PASSED or OVERRIDDEN status as completed (recent items only)
     actual_completed = db.query(InspectedItem).filter(
         InspectedItem.order_id == order_id,
-        InspectedItem.status.in_(['PASSED', 'OVERRIDDEN'])
+        InspectedItem.status.in_(['PASSED', 'OVERRIDDEN']),
+        InspectedItem.created_at >= yesterday  # Only count recent inspections
+    ).count()
+    
+    # Also check total items for this order (for debugging)
+    total_items = db.query(InspectedItem).filter(
+        InspectedItem.order_id == order_id
+    ).count()
+    
+    recent_items = db.query(InspectedItem).filter(
+        InspectedItem.order_id == order_id,
+        InspectedItem.created_at >= yesterday
     ).count()
     
     # Update the order with the actual completed count
@@ -245,7 +259,9 @@ def recalculate_order_progress(order_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(order)
     
-    print(f"📊 Order {order_id} completed count updated: {old_completed} → {actual_completed}")
+    print(f"📊 Order {order_id} recalculated: {old_completed} → {actual_completed}")
+    print(f"   Total items in DB: {total_items}, Recent items (24h): {recent_items}")
+    print(f"   Recent completed items: {actual_completed}")
     
     return order
 
@@ -307,3 +323,35 @@ def get_order_shipping_status(order_id: int, db: Session = Depends(get_db)):
         "tracking_number": shipping_detail.tracking_number if shipping_detail else None,
         "carrier": shipping_detail.shipping_method if shipping_detail else None
     }
+
+
+@router.delete("/{order_id}/cleanup-test-data", response_model=schemas.Order)
+def cleanup_order_test_data(order_id: int, db: Session = Depends(get_db)):
+    """Clean up old test inspection data and reset order to fresh state"""
+    order = db.query(Order).get(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Count current inspection items
+    current_items = db.query(InspectedItem).filter(
+        InspectedItem.order_id == order_id
+    ).count()
+    
+    # Delete ALL inspection items for this order (clean slate)
+    deleted_count = db.query(InspectedItem).filter(
+        InspectedItem.order_id == order_id
+    ).delete()
+    
+    # Reset order progress to 0
+    old_completed = order.completed
+    order.completed = 0
+    order.updated_at = datetime.utcnow()
+    
+    db.commit()
+    db.refresh(order)
+    
+    print(f"🧹 Order {order_id} cleanup complete:")
+    print(f"   Removed {deleted_count} inspection items")
+    print(f"   Reset completed: {old_completed} → 0")
+    
+    return order

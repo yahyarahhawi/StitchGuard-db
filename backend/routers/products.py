@@ -23,7 +23,7 @@ def list_products(db: Session = Depends(get_db)):
 # ------------------------------------------------------------------ #
 @router.post("/", response_model=schemas.Product, status_code=status.HTTP_201_CREATED)
 def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)):
-    prod = Product(**payload.dict())
+    prod = Product(**payload.model_dump())
     db.add(prod)
     db.commit()
     db.refresh(prod)

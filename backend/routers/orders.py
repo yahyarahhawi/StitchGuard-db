@@ -42,7 +42,7 @@ def create_order(payload: schemas.OrderCreate, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    order = Order(**payload.dict(), created_at=datetime.utcnow())
+    order = Order(**payload.model_dump(), created_at=datetime.utcnow())
     db.add(order)
     db.commit()
     db.refresh(order)
@@ -130,7 +130,7 @@ def update_order(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     
-    update_data = payload.dict(exclude_unset=True)
+    update_data = payload.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(order, field, value)
     
@@ -292,7 +292,7 @@ def create_shipping_record(payload: schemas.ShippingDetailCreate, db: Session = 
         )
     
     shipping_record = ShippingDetail(
-        **payload.dict(),
+        **payload.model_dump(),
         created_at=datetime.utcnow()
     )
     

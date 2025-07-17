@@ -62,7 +62,7 @@ def download_model_file(filename: str):
 
 @router.post("/", response_model=schemas.Model, status_code=status.HTTP_201_CREATED)
 def create_model(payload: schemas.ModelCreate, db: Session = Depends(get_db)):
-    model = Model(**payload.dict(), created_at=datetime.utcnow())
+    model = Model(**payload.model_dump(), created_at=datetime.utcnow())
     db.add(model)
     db.commit()
     db.refresh(model)
@@ -87,7 +87,7 @@ def update_model(
     if not model:
         raise HTTPException(status_code=404, detail="Model not found")
     
-    update_data = payload.dict(exclude_unset=True)
+    update_data = payload.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(model, field, value)
     

@@ -27,11 +27,14 @@ if not DATABASE_URL:
 # ✅ SECURITY FIX: Load model URLs from environment variables
 BRA_ORIENTATION_MODEL_URL = os.getenv("BRA_ORIENTATION_MODEL_URL")
 BRA_YOLO_MODEL_URL = os.getenv("BRA_YOLO_MODEL_URL")
+BRA_YOLO_V2_MODEL_URL = os.getenv("BRA_YOLO_V2_MODEL_URL")
 
 if not BRA_ORIENTATION_MODEL_URL:
     raise RuntimeError("BRA_ORIENTATION_MODEL_URL not set in .env")
 if not BRA_YOLO_MODEL_URL:
     raise RuntimeError("BRA_YOLO_MODEL_URL not set in .env")
+if not BRA_YOLO_V2_MODEL_URL:
+    raise RuntimeError("BRA_YOLO_V2_MODEL_URL not set in .env")
 
 engine = create_engine(DATABASE_URL, echo=False)
 
@@ -48,27 +51,31 @@ with Session(engine) as session:
     print("👥 Creating users...")
     
     # ---------- Users ----------
-    supervisor = User(
+    # Note: Sam Wood is actually a sewer, Yahya Rahhawi is the supervisor
+    sam_wood = User(
         name="Sam Wood",
         email="sam@builtmfgco.com",
-        role="supervisor"
+        role="sewer",
+        auth_id="B9908720-A3C6-4F7D-9D1B-123456789ABC"  # Placeholder, replace with actual if needed
     )
     yahya = User(
         name="Yahya Rahhawi",
         email="yahya@builtmfgco.com",
-        role="sewer"
+        role="supervisor",
+        auth_id="0B0E9AB6-1234-5678-9ABC-DEF123456789"  # Placeholder, replace with actual if needed
     )
     jane = User(
         name="Jane Smith",
         email="jane@builtmfgco.com",
         role="sewer"
+        # Jane doesn't have auth_id set yet
     )
-    session.add_all([supervisor, yahya, jane])
+    session.add_all([sam_wood, yahya, jane])
     session.flush()  # ensures IDs are assigned
 
     print("🤖 Creating ML models for bra inspection...")
     
-    # ---------- Models (Only for Bra Inspection) ----------
+    # ---------- Models (3 models as in current database) ----------
     # ✅ SECURITY FIX: Use environment variables instead of hardcoded URLs
     orientation_clf = Model(
         name="bra-orientation",
@@ -86,16 +93,25 @@ with Session(engine) as session:
         file_url=BRA_YOLO_MODEL_URL,
         description="Detects GO, Logo, NGO flaws in bras"
     )
-    session.add_all([orientation_clf, yolov8_model])
+    yolov8_v2_model = Model(
+        name="bra-yolo-v2",
+        type="yolov8",
+        version="1.0",
+        platform="coreml",
+        file_url=BRA_YOLO_V2_MODEL_URL,
+        description="cache"
+    )
+    session.add_all([orientation_clf, yolov8_model, yolov8_v2_model])
     session.flush()
 
     print("👕 Creating bra inspection product...")
     
     # ---------- Products (Only Bra) ----------
+    # Using model IDs [1, 3] as in current database (orientation + yolo-v2)
     bra_product = Product(
         name="Sports Bra Model A",
         description="High-performance sports bra with logo requirements",
-        model_ids=[orientation_clf.id, yolov8_model.id],
+        model_ids=[orientation_clf.id, yolov8_v2_model.id],  # Using v2 model as in current DB
         orientations_required=["Back", "Front"]
     )
     
@@ -104,19 +120,19 @@ with Session(engine) as session:
 
     print("📋 Creating inspection rules for bra only...")
     
-    # ---------- Inspection Rules for Bra Only ----------
+    # ---------- Inspection Rules for Bra Only (matching current database) ----------
     bra_rules = [
         InspectionRule(
             product_id=bra_product.id,
             orientation="Back",
-            flaw_type="NGO",
+            flaw_type="Bad-Straps",
             rule_type="fail_if_present",
             stability_seconds=3.0
         ),
         InspectionRule(
             product_id=bra_product.id,
             orientation="Back",
-            flaw_type="GO",
+            flaw_type="Good-Straps",
             rule_type="fail_if_absent",
             stability_seconds=3.0
         ),
@@ -139,28 +155,28 @@ with Session(engine) as session:
     session.add_all(bra_rules)
     session.flush()
 
-    print("📦 Creating bra inspection order for Yahya...")
+    print("📦 Creating bra inspection order assigned to Sam (sewer)...")
     
-    # ---------- Order (Only Bra Inspection) ----------
+    # ---------- Order (Matching current database: supervisor=1, sewer=2) ----------
     bra_order = Order(
         name="Bra Quality Inspection Batch #001",
-        supervisor_id=supervisor.id,
-        sewer_id=yahya.id,
+        supervisor_id=yahya.id,  # Yahya is the supervisor
+        sewer_id=sam_wood.id,   # Sam is the sewer
         product_id=bra_product.id,
-        quantity=50,
-        completed=0,
+        quantity=5,
+        completed=1,
         deadline=date.today() + timedelta(days=30)
     )
     
     session.add(bra_order)
     session.flush()
 
-    print("👷 Assigning bra inspection order to Yahya...")
+    print("👷 Assigning bra inspection order to Sam (sewer)...")
     
-    # ---------- Assigned Sewer (Only Yahya) ----------
+    # ---------- Assigned Sewer (Sam assigned to the order) ----------
     assignment = AssignedSewer(
         order_id=bra_order.id,
-        sewer_id=yahya.id
+        sewer_id=sam_wood.id
     )
     
     session.add(assignment)
@@ -173,12 +189,13 @@ with Session(engine) as session:
 
     print("✅ Database seeded successfully!")
     print(f"📊 Created:")
-    print(f"   • {len([supervisor, yahya, jane])} users")
-    print(f"   • {len([orientation_clf, yolov8_model])} ML models (bra inspection only)")
+    print(f"   • {len([sam_wood, yahya, jane])} users")
+    print(f"   • {len([orientation_clf, yolov8_model, yolov8_v2_model])} ML models (bra inspection)")
     print(f"   • {len([bra_product])} products (bra only)")
     print(f"   • {len(bra_rules)} inspection rules (bra only)")
-    print(f"   • 1 order (bra inspection assigned to Yahya)")
-    print(f"   • 1 assignment (Yahya assigned to bra inspection)")
+    print(f"   • 1 order (bra inspection assigned to Sam by Yahya)")
+    print(f"   • 1 assignment (Sam assigned to bra inspection)")
     print(f"\n🌐 Your API will be available at: http://localhost:8000")
     print(f"📚 API documentation: http://localhost:8000/docs")
-    print(f"\n✅ Yahya Rahhawi should now see the bra inspection order in the iOS app!")
+    print(f"\n✅ Sam Wood should now see the bra inspection order in the iOS app!")
+    print(f"✅ Yahya Rahhawi can create new orders via the supervisor tab!")

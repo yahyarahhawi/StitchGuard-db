@@ -45,7 +45,6 @@ class User(UserBase):
 class ProductBase(BaseModel):
     name: str
     description: Optional[str] = None
-    model_ids: List[int] = []
     orientations_required: List[str] = []
 
 
@@ -57,6 +56,16 @@ class Product(ProductBase):
     id: int
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProductWithModels(ProductBase):
+    """Product response with associated models included"""
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    models: List['Model'] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -190,10 +199,11 @@ class ModelBase(BaseModel):
     description: Optional[str] = None
     platform: Optional[str] = None
     file_url: Optional[str] = None
+    product_id: Optional[int] = None
 
 
 class ModelCreate(ModelBase):
-    pass
+    product_id: int  # Required when creating a model
 
 
 class Model(ModelBase):

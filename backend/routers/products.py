@@ -19,6 +19,30 @@ def list_products(db: Session = Depends(get_db)):
 
 
 # ------------------------------------------------------------------ #
+#  LIST all products WITH their models
+# ------------------------------------------------------------------ #
+@router.get("/with-models", response_model=List[schemas.ProductWithModels])
+def list_products_with_models(db: Session = Depends(get_db)):
+    """Get all products with their associated models included"""
+    products = db.query(Product).all()
+    result = []
+    for product in products:
+        # Manually load models for each product
+        models = db.query(Model).filter(Model.product_id == product.id).all()
+        product_dict = {
+            "id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "orientations_required": product.orientations_required,
+            "created_at": product.created_at,
+            "updated_at": product.updated_at,
+            "models": models
+        }
+        result.append(product_dict)
+    return result
+
+
+# ------------------------------------------------------------------ #
 #  CREATE a new product
 # ------------------------------------------------------------------ #
 @router.post("/", response_model=schemas.Product, status_code=status.HTTP_201_CREATED)
@@ -45,11 +69,8 @@ def get_product_models_explicit(product_id: int, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    # Get models by IDs
-    if not product.model_ids:
-        return []
-    
-    models = db.query(Model).filter(Model.id.in_(product.model_ids)).all()
+    # Get models using foreign key relationship
+    models = db.query(Model).filter(Model.product_id == product_id).all()
     return models
 
 
@@ -68,11 +89,8 @@ def get_product_models_original(product_id: int, db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    # Get models by IDs
-    if not product.model_ids:
-        return []
-    
-    models = db.query(Model).filter(Model.id.in_(product.model_ids)).all()
+    # Get models using foreign key relationship
+    models = db.query(Model).filter(Model.product_id == product_id).all()
     return models
 
 

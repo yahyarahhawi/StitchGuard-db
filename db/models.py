@@ -34,17 +34,14 @@ class Product(Base):
     """
     A product (bra, shirt, …).  Each product knows:
 
-    • which CoreML / ONNX models are needed (model_ids)
     • which physical orientations must be inspected (orientations_required)
+    • has many models via foreign key relationship
     """
     __tablename__ = 'products'
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
     description = Column(Text)
-    
-    # IDs of the ML models used during inspection
-    model_ids = Column(ARRAY(Integer), default=[])
     
     # Ordered list of orientations required for this product
     # e.g. ['Back', 'Front', 'Inside-Out Back']
@@ -53,6 +50,8 @@ class Product(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+    # Relationships
+    models = relationship("Model", back_populates="product", cascade="all, delete-orphan")
     inspection_rules = relationship("InspectionRule", back_populates="product")
     orders = relationship("Order", back_populates="product")
 
@@ -69,8 +68,15 @@ class Model(Base):
 
     platform = Column(String(50))           # 'coreml' | 'onnx' | 'pt'
     file_url = Column(Text)             # where the weight file is stored
+    
+    # Foreign key to product
+    product_id = Column(Integer, ForeignKey('products.id'), nullable=True)
+    
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    product = relationship("Product", back_populates="models")
 
 
 # -----------------------  INSPECTION RULE  --------------------------

@@ -73,17 +73,31 @@ with Session(engine) as session:
     session.add_all([sam_wood, yahya, jane])
     session.flush()  # ensures IDs are assigned
 
+    print("👕 Creating bra inspection product first...")
+    
+    # ---------- Products (Only Bra) - Create BEFORE models ----------
+    bra_product = Product(
+        name="Sports Bra Model A",
+        description="High-performance sports bra with logo requirements",
+        orientations_required=["Back", "Front"]
+    )
+    
+    session.add(bra_product)
+    session.flush()  # Get the product ID
+
     print("🤖 Creating ML models for bra inspection...")
     
     # ---------- Models (3 models as in current database) ----------
     # ✅ SECURITY FIX: Use environment variables instead of hardcoded URLs
+    # Now models reference the product via foreign key
     orientation_clf = Model(
         name="bra-orientation",
         type="cnn",
         version="1.0",
         platform="coreml",
         file_url=BRA_ORIENTATION_MODEL_URL,
-        description="Classifies bra orientations: Back, Front, No Bra"
+        description="Classifies bra orientations: Back, Front, No Bra",
+        product_id=bra_product.id
     )
     yolov8_model = Model(
         name="bra-yolo",
@@ -91,7 +105,8 @@ with Session(engine) as session:
         version="1.0",
         platform="coreml",
         file_url=BRA_YOLO_MODEL_URL,
-        description="Detects GO, Logo, NGO flaws in bras"
+        description="Detects GO, Logo, NGO flaws in bras",
+        product_id=bra_product.id
     )
     yolov8_v2_model = Model(
         name="bra-yolo-v2",
@@ -99,23 +114,10 @@ with Session(engine) as session:
         version="1.0",
         platform="coreml",
         file_url=BRA_YOLO_V2_MODEL_URL,
-        description="cache"
+        description="cache",
+        product_id=bra_product.id
     )
     session.add_all([orientation_clf, yolov8_model, yolov8_v2_model])
-    session.flush()
-
-    print("👕 Creating bra inspection product...")
-    
-    # ---------- Products (Only Bra) ----------
-    # Using model IDs [1, 3] as in current database (orientation + yolo-v2)
-    bra_product = Product(
-        name="Sports Bra Model A",
-        description="High-performance sports bra with logo requirements",
-        model_ids=[orientation_clf.id, yolov8_v2_model.id],  # Using v2 model as in current DB
-        orientations_required=["Back", "Front"]
-    )
-    
-    session.add_all([bra_product])
     session.flush()
 
     print("📋 Creating inspection rules for bra only...")

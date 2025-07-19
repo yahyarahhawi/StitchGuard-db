@@ -62,6 +62,12 @@ def download_model_file(filename: str):
 
 @router.post("/", response_model=schemas.Model, status_code=status.HTTP_201_CREATED)
 def create_model(payload: schemas.ModelCreate, db: Session = Depends(get_db)):
+    # Validate that the product exists
+    from db.models import Product
+    product = db.query(Product).get(payload.product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
     model = Model(**payload.model_dump(), created_at=datetime.utcnow())
     db.add(model)
     db.commit()

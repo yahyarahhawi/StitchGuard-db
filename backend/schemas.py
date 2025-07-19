@@ -260,6 +260,59 @@ class ShippingDetail(ShippingDetailBase):
 
 
 # ------------------------------------------------------------------ #
+#  TUTORIALS
+# ------------------------------------------------------------------ #
+class TutorialStepBase(BaseModel):
+    step_number: int
+    title: str
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+
+
+class TutorialStepCreate(TutorialStepBase):
+    tutorial_id: int
+
+
+class TutorialStep(TutorialStepBase):
+    id: int
+    tutorial_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TutorialBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    is_active: bool = True
+
+
+class TutorialCreate(TutorialBase):
+    product_id: int
+
+
+class Tutorial(TutorialBase):
+    id: int
+    product_id: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TutorialWithSteps(TutorialBase):
+    """Tutorial response with all steps included"""
+    id: int
+    product_id: int
+    created_at: datetime
+    updated_at: datetime
+    steps: List[TutorialStep] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ------------------------------------------------------------------ #
 #  STATISTICS & ANALYTICS
 # ------------------------------------------------------------------ #
 class OrderStats(BaseModel):

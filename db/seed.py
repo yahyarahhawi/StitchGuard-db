@@ -12,7 +12,8 @@ load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 
 from models import (
     Base, User, Model, Product, InspectionRule,
-    Order, AssignedSewer, InspectedItem, Flaw
+    Order, AssignedSewer, InspectedItem, Flaw,
+    Tutorial, TutorialStep
 )
 
 # ------------------------------------------------------------------
@@ -184,6 +185,63 @@ with Session(engine) as session:
     session.add(assignment)
     session.flush()
 
+    print("📚 Creating tutorial for bra production...")
+    
+    # ---------- Tutorial for Bra Product ----------
+    bra_tutorial = Tutorial(
+        product_id=bra_product.id,
+        title="Sports Bra Production Tutorial",
+        description="Step-by-step tutorial for Sports Bra production setup and quality inspection",
+        is_active=True
+    )
+    
+    session.add(bra_tutorial)
+    session.flush()
+
+    print("📝 Creating 5 tutorial steps...")
+    
+    # ---------- Tutorial Steps ----------
+    tutorial_steps = [
+        TutorialStep(
+            tutorial_id=bra_tutorial.id,
+            step_number=1,
+            title="Prepare Workspace",
+            description="Set up your workspace for Sports Bra production. Ensure good lighting and clean surface.",
+            image_url=None  # Will be added manually in Supabase
+        ),
+        TutorialStep(
+            tutorial_id=bra_tutorial.id,
+            step_number=2,
+            title="Position Product",
+            description="Place the Sports Bra in the correct orientation for inspection.",
+            image_url=None
+        ),
+        TutorialStep(
+            tutorial_id=bra_tutorial.id,
+            step_number=3,
+            title="Check Required Orientations",
+            description="Verify that you can access all required inspection orientations (Back, Front).",
+            image_url=None
+        ),
+        TutorialStep(
+            tutorial_id=bra_tutorial.id,
+            step_number=4,
+            title="Camera Setup",
+            description="Position your device camera at the optimal distance for clear inspection images.",
+            image_url=None
+        ),
+        TutorialStep(
+            tutorial_id=bra_tutorial.id,
+            step_number=5,
+            title="Begin Inspection",
+            description="Start the inspection process following the on-screen prompts for each orientation.",
+            image_url=None
+        )
+    ]
+    
+    session.add_all(tutorial_steps)
+    session.flush()
+
     print("🚫 Skipping other orders and sample inspection data as requested")
 
     # ---------- Commit everything ----------
@@ -197,7 +255,9 @@ with Session(engine) as session:
     print(f"   • {len(bra_rules)} inspection rules (bra only)")
     print(f"   • 1 order (bra inspection assigned to Sam by Yahya)")
     print(f"   • 1 assignment (Sam assigned to bra inspection)")
+    print(f"   • 1 tutorial with {len(tutorial_steps)} steps (bra production)")
     print(f"\n🌐 Your API will be available at: http://localhost:8000")
     print(f"📚 API documentation: http://localhost:8000/docs")
     print(f"\n✅ Sam Wood should now see the bra inspection order in the iOS app!")
     print(f"✅ Yahya Rahhawi can create new orders via the supervisor tab!")
+    print(f"📚 Tutorial available at: /api/v1/tutorials/product/{bra_product.id}/active")

@@ -54,6 +54,7 @@ class Product(Base):
     models = relationship("Model", back_populates="product", cascade="all, delete-orphan")
     inspection_rules = relationship("InspectionRule", back_populates="product")
     orders = relationship("Order", back_populates="product")
+    tutorials = relationship("Tutorial", back_populates="product", cascade="all, delete-orphan")
 
 
 # ---------------------------  MODEL  --------------------------------
@@ -192,3 +193,37 @@ class ShippingDetail(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
     order = relationship("Order", back_populates="shipping_detail")
+
+
+# ---------------------------  TUTORIAL  --------------------------------
+class Tutorial(Base):
+    __tablename__ = 'tutorials'
+
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text)
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    product = relationship("Product", back_populates="tutorials")
+    steps = relationship("TutorialStep", back_populates="tutorial", cascade="all, delete-orphan", order_by="TutorialStep.step_number")
+
+
+# -----------------------  TUTORIAL STEP  ---------------------------
+class TutorialStep(Base):
+    __tablename__ = 'tutorial_steps'
+
+    id = Column(Integer, primary_key=True)
+    tutorial_id = Column(Integer, ForeignKey('tutorials.id'), nullable=False)
+    step_number = Column(Integer, nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text)
+    image_url = Column(Text)
+    created_at = Column(DateTime, default=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Relationships
+    tutorial = relationship("Tutorial", back_populates="steps")

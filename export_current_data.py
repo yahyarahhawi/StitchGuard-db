@@ -43,12 +43,18 @@ def main():
             
             print("\n👕 PRODUCTS:")
             print("-" * 30)
-            result = conn.execute(text("SELECT id, name, description, model_ids, orientations_required FROM products ORDER BY id"))
+            result = conn.execute(text("SELECT id, name, description, orientations_required FROM products ORDER BY id"))
             for row in result:
                 print(f"  ID: {row[0]}, Name: {row[1]}")
                 print(f"    Description: {row[2]}")
-                print(f"    Model IDs: {row[3]}")
-                print(f"    Orientations: {row[4]}")
+                print(f"    Orientations: {row[3]}")
+                
+                # Get associated models using foreign key
+                models_result = conn.execute(text("SELECT id, name FROM models WHERE product_id = :product_id"), {"product_id": row[0]})
+                models = models_result.fetchall()
+                model_ids = [model[0] for model in models]
+                model_names = [model[1] for model in models]
+                print(f"    Associated Models: {model_ids} ({', '.join(model_names)})")
             
             print("\n📋 INSPECTION RULES:")
             print("-" * 30)

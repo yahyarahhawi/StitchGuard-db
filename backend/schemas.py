@@ -60,14 +60,6 @@ class Product(ProductBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ProductWithModels(ProductBase):
-    """Product response with associated models included"""
-    id: int
-    created_at: datetime
-    updated_at: datetime
-    models: List['Model'] = []
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 # ------------------------------------------------------------------ #
@@ -210,6 +202,22 @@ class Model(ModelBase):
     id: int
     created_at: datetime
     updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ------------------------------------------------------------------ #
+#  PRODUCT WITH MODELS (must be after Model definition)
+# ------------------------------------------------------------------ #
+class ProductWithModels(BaseModel):
+    """Product response with associated models included"""
+    id: int
+    name: str
+    description: Optional[str] = None
+    orientations_required: List[str] = []
+    created_at: datetime
+    updated_at: datetime
+    models: List[Model] = []
 
     model_config = ConfigDict(from_attributes=True)
 

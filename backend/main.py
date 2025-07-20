@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # absolute import, now that backend is a package
-from backend.routers import products, users, orders, inspection, models, analytics, admin, tutorials
+from backend.routers import products, users, orders, inspection, models, analytics, admin, tutorials, orientations
 # OR use relative import:
 # from .routers import products, users, orders, inspection
 
@@ -31,7 +31,8 @@ routers = [
     models.router,
     analytics.router,
     admin.router,  # NEW: Admin endpoints including migration
-    tutorials.router  # NEW: Tutorial endpoints
+    tutorials.router,  # NEW: Tutorial endpoints
+    orientations.router  # NEW: Orientation management endpoints
 ]
 
 for router in routers:

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 import backend.schemas as schemas
 from backend.deps import get_db                     # DB dependency
-from db.models import Product, Model                       # SQLAlchemy ORM
+from db.models import Product, Model, ProductOrientation                       # SQLAlchemy ORM
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -15,7 +15,12 @@ router = APIRouter(prefix="/products", tags=["products"])
 # ------------------------------------------------------------------ #
 @router.get("/", response_model=List[schemas.Product])
 def list_products(db: Session = Depends(get_db)):
-    return db.query(Product).all()
+    """Get all products with their orientations included"""
+    from sqlalchemy.orm import joinedload
+    
+    return db.query(Product).options(
+        joinedload(Product.orientations)
+    ).all()
 
 
 # ------------------------------------------------------------------ #
@@ -23,20 +28,26 @@ def list_products(db: Session = Depends(get_db)):
 # ------------------------------------------------------------------ #
 @router.get("/with-models", response_model=List[schemas.ProductWithModels])
 def list_products_with_models(db: Session = Depends(get_db)):
-    """Get all products with their associated models included"""
-    products = db.query(Product).all()
+    """Get all products with their associated models and orientations included"""
+    from sqlalchemy.orm import joinedload
+    
+    products = db.query(Product).options(
+        joinedload(Product.models),
+        joinedload(Product.orientations)
+    ).all()
+    
+    # Convert to response format with backward compatibility
     result = []
     for product in products:
-        # Manually load models for each product
-        models = db.query(Model).filter(Model.product_id == product.id).all()
         product_dict = {
             "id": product.id,
             "name": product.name,
             "description": product.description,
-            "orientations_required": product.orientations_required,
+            "orientations_required": [o.orientation for o in product.orientations],  # Backward compatibility
             "created_at": product.created_at,
             "updated_at": product.updated_at,
-            "models": models
+            "models": product.models,
+            "orientations": product.orientations
         }
         result.append(product_dict)
     return result
@@ -47,11 +58,27 @@ def list_products_with_models(db: Session = Depends(get_db)):
 # ------------------------------------------------------------------ #
 @router.post("/", response_model=schemas.Product, status_code=status.HTTP_201_CREATED)
 def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)):
-    prod = Product(**payload.model_dump())
-    db.add(prod)
+    """Create a new product with orientations"""
+    # Extract orientations from payload and exclude from product creation
+    orientations_list = payload.orientations
+    product_data = payload.model_dump(exclude={'orientations'})
+    
+    # Create the product
+    product = Product(**product_data)
+    db.add(product)
+    db.flush()  # Get the product ID without committing
+    
+    # Create orientations for the product
+    for orientation_name in orientations_list:
+        orientation = ProductOrientation(
+            product_id=product.id,
+            orientation=orientation_name
+        )
+        db.add(orientation)
+    
     db.commit()
-    db.refresh(prod)
-    return prod
+    db.refresh(product)
+    return product
 
 
 # ------------------------------------------------------------------ #

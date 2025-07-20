@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column, Integer, String, Boolean, ForeignKey, Text,
-    Date, TIMESTAMP, Float, DateTime
+    Date, TIMESTAMP, Float, DateTime, UniqueConstraint
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -43,9 +43,6 @@ class Product(Base):
     name = Column(String(255), nullable=False)
     description = Column(Text)
     
-    # Ordered list of orientations required for this product
-    # e.g. ['Back', 'Front', 'Inside-Out Back']
-    orientations_required = Column(ARRAY(String), default=[])
     
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
@@ -55,6 +52,7 @@ class Product(Base):
     inspection_rules = relationship("InspectionRule", back_populates="product")
     orders = relationship("Order", back_populates="product")
     tutorials = relationship("Tutorial", back_populates="product", cascade="all, delete-orphan")
+    orientations = relationship("ProductOrientation", back_populates="product", cascade="all, delete-orphan")
 
 
 # ---------------------------  MODEL  --------------------------------
@@ -227,3 +225,25 @@ class TutorialStep(Base):
 
     # Relationships
     tutorial = relationship("Tutorial", back_populates="steps")
+
+
+# ----------------------- PRODUCT ORIENTATION -------------------------
+class ProductOrientation(Base):
+    """
+    Orientations required for each product inspection.
+    Replaces the JSON array orientations_required in Product model.
+    """
+    __tablename__ = 'product_orientations'
+
+    id = Column(Integer, primary_key=True)
+    product_id = Column(Integer, ForeignKey('products.id'), nullable=False)
+    orientation = Column(String(100), nullable=False)
+    created_at = Column(DateTime, default=func.now())
+
+    # Relationships
+    product = relationship("Product", back_populates="orientations")
+
+    # Unique constraint to prevent duplicate orientations per product
+    __table_args__ = (
+        UniqueConstraint('product_id', 'orientation', name='unique_product_orientation'),
+    )

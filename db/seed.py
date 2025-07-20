@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).parent.parent / ".env")
 
 from models import (
-    Base, User, Model, Product, InspectionRule,
+    Base, User, Model, Product, ProductOrientation, InspectionRule,
     Order, AssignedSewer, InspectedItem, Flaw,
     Tutorial, TutorialStep
 )
@@ -79,8 +79,7 @@ with Session(engine) as session:
     # ---------- Products (Only Bra) - Create BEFORE models ----------
     bra_product = Product(
         name="Sports Bra Model A",
-        description="High-performance sports bra with logo requirements",
-        orientations_required=["Back", "Front"]
+        description="High-performance sports bra with logo requirements"
     )
     
     session.add(bra_product)
@@ -119,6 +118,23 @@ with Session(engine) as session:
         product_id=bra_product.id
     )
     session.add_all([orientation_clf, yolov8_model, yolov8_v2_model])
+    session.flush()
+
+    print("🎯 Creating product orientations...")
+    
+    # ---------- Product Orientations ----------
+    bra_orientations = [
+        ProductOrientation(
+            product_id=bra_product.id,
+            orientation="Back"
+        ),
+        ProductOrientation(
+            product_id=bra_product.id,
+            orientation="Front"
+        )
+    ]
+    
+    session.add_all(bra_orientations)
     session.flush()
 
     print("📋 Creating inspection rules for bra only...")
@@ -252,6 +268,7 @@ with Session(engine) as session:
     print(f"   • {len([sam_wood, yahya, jane])} users")
     print(f"   • {len([orientation_clf, yolov8_model, yolov8_v2_model])} ML models (bra inspection)")
     print(f"   • {len([bra_product])} products (bra only)")
+    print(f"   • {len(bra_orientations)} product orientations")
     print(f"   • {len(bra_rules)} inspection rules (bra only)")
     print(f"   • 1 order (bra inspection assigned to Sam by Yahya)")
     print(f"   • 1 assignment (Sam assigned to bra inspection)")

@@ -42,20 +42,36 @@ class User(UserBase):
 # ------------------------------------------------------------------ #
 #  PRODUCTS
 # ------------------------------------------------------------------ #
+class ProductOrientationBase(BaseModel):
+    orientation: str
+
+
+class ProductOrientationCreate(ProductOrientationBase):
+    product_id: int
+
+
+class ProductOrientation(ProductOrientationBase):
+    id: int
+    product_id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ProductBase(BaseModel):
     name: str
     description: Optional[str] = None
-    orientations_required: List[str] = []
 
 
 class ProductCreate(ProductBase):
-    pass
+    orientations: List[str] = []  # List of orientation names to create
 
 
 class Product(ProductBase):
     id: int
     created_at: datetime
     updated_at: datetime
+    orientations: List[ProductOrientation] = []
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -134,7 +150,7 @@ class InspectionRuleOut(InspectionRuleBase):
 
 class InspectionConfigOut(BaseModel):
     product_id: int
-    orientations_required: List[str]
+    orientations_required: List[str]  # Keep as List[str] for API compatibility
     rules: List[InspectionRuleOut]
 
 
@@ -214,10 +230,11 @@ class ProductWithModels(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
-    orientations_required: List[str] = []
+    orientations_required: List[str] = []  # Keep for API compatibility
     created_at: datetime
     updated_at: datetime
     models: List[Model] = []
+    orientations: List[ProductOrientation] = []
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -8,6 +8,7 @@ import backend.schemas as schemas
 from backend.deps import get_db
 from db.models import (
     Product,
+    ProductOrientation,
     InspectionRule,
     InspectedItem,
     Flaw,
@@ -37,9 +38,17 @@ def get_inspection_config(product_id: int, db: Session = Depends(get_db)):
         .all()
     )
 
+    # Load orientations using the relationship
+    from sqlalchemy.orm import joinedload
+    product_with_orientations = db.query(Product).options(
+        joinedload(Product.orientations)
+    ).filter(Product.id == product_id).first()
+    
+    orientations_list = [o.orientation for o in product_with_orientations.orientations]
+    
     return {
         "product_id": product.id,
-        "orientations_required": product.orientations_required,
+        "orientations_required": orientations_list,
         "rules": rules,
     }
 

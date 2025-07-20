@@ -18,9 +18,15 @@ def list_products(db: Session = Depends(get_db)):
     """Get all products with their orientations included"""
     from sqlalchemy.orm import joinedload
     
-    return db.query(Product).options(
+    products_orm = db.query(Product).options(
         joinedload(Product.orientations)
     ).all()
+    
+    # Convert to schema with orientations_required filled
+    return [
+        schemas.Product.from_orm_with_orientations(product)
+        for product in products_orm
+    ]
 
 
 # ------------------------------------------------------------------ #
@@ -78,7 +84,7 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
     
     db.commit()
     db.refresh(product)
-    return product
+    return schemas.Product.from_orm_with_orientations(product)
 
 
 # ------------------------------------------------------------------ #

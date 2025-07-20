@@ -72,8 +72,22 @@ class Product(ProductBase):
     created_at: datetime
     updated_at: datetime
     orientations: List[ProductOrientation] = []
+    orientations_required: List[str] = []  # For backward compatibility
 
     model_config = ConfigDict(from_attributes=True)
+    
+    @classmethod
+    def from_orm_with_orientations(cls, product_orm):
+        """Helper to create Product schema with orientations_required filled"""
+        return cls(
+            name=product_orm.name,
+            description=product_orm.description,
+            id=product_orm.id,
+            created_at=product_orm.created_at,
+            updated_at=product_orm.updated_at,
+            orientations=product_orm.orientations,
+            orientations_required=[o.orientation for o in product_orm.orientations]
+        )
 
 
 

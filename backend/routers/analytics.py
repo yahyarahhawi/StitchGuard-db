@@ -43,8 +43,8 @@ def get_overview_stats(
         items_query = items_query.filter(and_(*date_filter))
     
     total_items = items_query.count()
-    passed_items = items_query.filter(InspectedItem.passed == True).count()
-    failed_items = total_items - passed_items
+    passed_items = items_query.filter(InspectedItem.status.in_(['PASSED', 'OVERRIDDEN'])).count()
+    failed_items = items_query.filter(InspectedItem.status == 'FAILED').count()
     pass_rate = (passed_items / total_items * 100) if total_items > 0 else 0
     
     return schemas.OrderStats(
@@ -82,10 +82,13 @@ def get_user_stats(
     total_inspections = db.query(InspectedItem).filter(and_(*date_filter)).count()
     passed_inspections = db.query(InspectedItem).filter(
         and_(*date_filter),
-        InspectedItem.passed == True
+        InspectedItem.status.in_(['PASSED', 'OVERRIDDEN'])
     ).count()
     
-    failed_inspections = total_inspections - passed_inspections
+    failed_inspections = db.query(InspectedItem).filter(
+        and_(*date_filter),
+        InspectedItem.status == 'FAILED'
+    ).count()
     pass_rate = (passed_inspections / total_inspections * 100) if total_inspections > 0 else 0
     
     return schemas.UserStats(
@@ -137,7 +140,12 @@ def get_daily_trends(
     results = db.query(
         func.date(InspectedItem.inspected_at).label('date'),
         func.count(InspectedItem.id).label('total'),
-        func.sum(func.cast(InspectedItem.passed, Integer)).label('passed')
+        func.sum(
+            func.case(
+                (InspectedItem.status.in_(['PASSED', 'OVERRIDDEN']), 1),
+                else_=0
+            )
+        ).label('passed')
     ).filter(
         InspectedItem.inspected_at >= start_date,
         InspectedItem.inspected_at <= end_date
